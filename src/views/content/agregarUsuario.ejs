@@ -27,6 +27,7 @@
                             <input type="text" id="apellido" placeholder="Apellido" required>
                             <input type="email" id="correo" placeholder="Correo electrónico" required>
                             <input type="password" id="contraseña" placeholder="Contraseña" required>
+                            <input type="password" id="confirmarContraseña" placeholder="Confirmar Contraseña" required>
                             <select id="rolSelect" required>
                                 <option value="1">Cliente</option>
                                 <option value="2">Admin</option>
@@ -42,6 +43,7 @@
         const apellido = document.getElementById('apellido').value;
         const correo = document.getElementById('correo').value;
         const contraseña = document.getElementById('contraseña').value;
+        const confirmarContraseña = document.getElementById('confirmarContraseña').value;
         const rolSelect = document.getElementById('rolSelect');
         const rol = rolSelect.options[rolSelect.selectedIndex].value; // Obtener el valor seleccionado del rol
     
@@ -51,9 +53,13 @@
             apellido: apellido,
             correo: correo,
             contraseña: contraseña,
-            rol: rol // Pasar el valor seleccionado del rol al objeto de datos
+            rol: rol, // Pasar el valor seleccionado del rol al objeto de datos
+            confirmarContraseña:confirmarContraseña
         };
-    
+        if (contraseña !== confirmarContraseña) {
+    $.notify("Las contraseñas no coinciden");
+    return false; // Evitar que el formulario se envíe si las contraseñas no coinciden
+  }
   // Validar que el nombre y el apellido solo contengan caracteres alfabéticos
   const nombreRegex = /^[A-Za-z]+$/;
   if (!nombreRegex.test(nombre)) {

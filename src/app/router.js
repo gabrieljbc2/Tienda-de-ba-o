@@ -31,6 +31,6 @@ router.get("/repartidor", checkRole(3), (req, res) => res.render("repartidor"));
 router.get("/envio", checkRole(3), (req, res) => res.render("envio"));
 router.get("/pedido", checkRole(3), (req, res) => res.render("pedido"));
 router.get("/pedidos", checkRole(3), (req, res) => res.render("pedidos"));
-router.get("/detallePedido", checkRole(3), (req, res) => res.render("detallePedido"));
+router.get("/detallePedido", checkRole(1), (req, res) => res.render("detallePedido"));
 
 module.exports = router;

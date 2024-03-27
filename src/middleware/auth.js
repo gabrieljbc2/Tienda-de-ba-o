@@ -3,7 +3,7 @@ function checkRole(rol) {
     if (req.session.rol === rol) {
         next()
     } else {
-        res.status(403).render('access-restricted', { message: "Acceso Restringuido"});
+        res.status(403).render('access-restricted', { message: "Acceso Restringido"});
     }
   };
 }

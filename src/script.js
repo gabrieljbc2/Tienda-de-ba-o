@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   <tr>
                       <th scope="row">${envio.id}</th>
                       <td>${envio.nombreApellido}</td>
-                      <td>${envio.totalProductos}</td>
+                      <td>₡${envio.totalProductos}</td>
                       <td>${envio.codigoAleatorio}</td>
                       <td>${envio.estado}</td>
                       <td>
