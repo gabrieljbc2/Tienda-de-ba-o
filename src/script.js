@@ -278,6 +278,36 @@ function actualizarCantidadCarrito() {
 // Llamar a la función para actualizar la cantidad en el ícono del carrito cuando el DOM esté completamente cargado
 document.addEventListener("DOMContentLoaded", actualizarCantidadCarrito);
 
+
+
+// Función para actualizar la cantidad de un producto en el carrito
+function actualizarCantidad(productoId, isIncrement) {
+  fetch(`/actualizar-cantidad/${productoId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ isIncrement }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Error al actualizar la cantidad del producto en el carrito");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Actualizar la cantidad mostrada en la tabla del carrito
+      const quantityElement = document.querySelector(`.btn-quantity[data-product-id="${productoId}"] + span`);
+      quantityElement.textContent = data.cantidad;
+
+      // Actualizar el precio total y subtotal mostrado
+      subtotalElement.textContent = `₡${data.subtotal.toFixed(2)}`;
+      totalElement.textContent = `₡${data.subtotal.toFixed(2)}`;
+    })
+    .catch((error) => console.error("Error al actualizar la cantidad del producto en el carrito: ", error));
+}
+
+
 // También llamamos a la función después de agregar un producto al carrito para reflejar los cambios
 function agregarAlCarrito(productoId) {
   if (!productoId) {
@@ -369,6 +399,7 @@ function checkSession() {
         const authSection = document.getElementById("authSection");
         const adminLink = document.getElementById("adminLink");
         const userLink = document.getElementById("userLink"); // Agregamos referencia al enlace del dashboard
+        const fisicaLink = document.getElementById("fisicaLink");
         const accountOptions = document.getElementById("accountOptions");
         const logoutLink = document.getElementById("logoutLink");
         const shopCart = document.getElementById("shopCart");
@@ -383,6 +414,8 @@ function checkSession() {
           if (data.rol !== null && data.rol === 2) {
             adminLink.removeAttribute("hidden");
             userLink.removeAttribute("hidden"); // Mostramos el enlace del dashboard si el usuario tiene rol de administrador
+            
+            fisicaLink.removeAttribute("hidden");
             repartidor.setAttribute("hidden", "true");
             pedidoRealizado.setAttribute("hidden", "true");
           } else if (data.rol !== null && data.rol === 3) {
@@ -390,10 +423,12 @@ function checkSession() {
             shopCart.setAttribute("hidden", "true");
             pedidoRealizado.setAttribute("hidden", "true");
             adminLink.setAttribute("hidden", "true");
+           fisicaLink.setAttribute("hidden", "true");
             userLink.setAttribute("hidden", "true");
             tienda.setAttribute("hidden", "true");
           } else {
             adminLink.setAttribute("hidden", "true");
+          fisicaLink.setAttribute("hidden", "true");
             userLink.setAttribute("hidden", "true");
             repartidor.setAttribute("hidden", "true"); // Ocultamos el enlace del dashboard si el usuario no tiene rol de administrador
           }
@@ -406,6 +441,7 @@ function checkSession() {
             pedidoRealizado.setAttribute("hidden", "true");
             repartidor.setAttribute("hidden", "true");
           adminLink.setAttribute("hidden", "true");
+        fisicaLink.setAttribute("hidden", "true");
           userLink.setAttribute("hidden", "true"); // Ocultamos el enlace del dashboard si el usuario no está autenticado
           accountOptions.style.display = "none"; // Ocultar las opciones de cuenta
           logoutLink.style.display = "none"; // Ocultar el enlace de cerrar sesión
@@ -669,6 +705,55 @@ function redirectToModificarUsuario(userID) {
 
 
 
+document.addEventListener('DOMContentLoaded', function() {
+  const tablaCompras = document.getElementById('tabla-compras');
+
+  tablaCompras.addEventListener('click', function(event) {
+      if (event.target.classList.contains('btn-compra-recibida')) {
+          const envioID = event.target.dataset.envioid;
+          marcarCompraRecibida(envioID);
+      }
+  });
+
+  // Realizar una solicitud al servidor para obtener la lista de envíos físicos
+  fetch('/obtener-envioFisico')
+      .then(response => response.json())
+      .then(enviosFisicos => {
+          // Generar dinámicamente las filas de la tabla con los datos de los envíos físicos
+          enviosFisicos.forEach(envio => {
+              const filaEnvio = `
+                  <tr>
+                      <th scope="row">${envio.id}</th>
+                      <td>${envio.nombreApellido}</td>
+                      <td>${envio.totalProductos}</td>
+                      <td>${envio.codigoAleatorio}</td>
+                      <td>${envio.estado}</td>
+                      <td>
+                          <button class="btn btn-success btn-sm btn-compra-recibida" data-envioid="${envio.id}">Compra Recibida</button>
+               
+                      </td>
+                  </tr>
+              `;
+              tablaCompras.innerHTML += filaEnvio;
+          });
+      })
+      .catch(error => console.error('Error al obtener la lista de envíos físicos:', error));
+});
+
+function marcarCompraRecibida(envioID) {
+  fetch('/envioFisico/' + envioID + '/finalizar', {
+      method: 'PUT'
+  })
+  .then(response => {
+      if (response.ok) {
+          // Actualizar la página después de marcar la compra como recibida
+          location.reload();
+      } else {
+          throw new Error('Error al marcar la compra como recibida');
+      }
+  })
+  .catch(error => console.error('Error al marcar la compra como recibida:', error));
+}
 
 
 

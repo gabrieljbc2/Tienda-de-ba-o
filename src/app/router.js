@@ -22,6 +22,7 @@ router.get("/admin", checkRole(2), (req, res) => res.render("admin"));
 router.get("/add-products", checkRole(2), (req, res) => res.render("add-product"));
 router.get("/edit-product", checkRole(2), (req, res) => res.render("edit-product"));
 router.get("/users", checkRole(2), (req, res) => res.render("users"));
+router.get("/compraFisica", checkRole(2), (req, res) => res.render("compraFisica"));
 router.get("/agregarUsuario", checkRole(2), (req, res) => res.render("agregarUsuario"));
 router.get("/modificarUsuario", checkRole(2), (req, res) => res.render("modificarUsuario"));
 

@@ -290,9 +290,76 @@ app.get('/obtener-usuarios', (req, res) => {
 });
 
 
+// Ruta para obtener la lista de envíos físicos
+app.get('/obtener-envioFisico', (req, res) => {
+  const query = 'SELECT * FROM envioFisico';
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error('Error al obtener la lista de envíos físicos:', err);
+      res.status(500).json({ error: 'Error interno del servidor' });
+      return;
+    }
+    res.json(result);
+  });
+});
+
+// Ruta para actualizar el estado del envío físico a "Finalizado"
+app.put('/envioFisico/:id/finalizar', (req, res) => {
+  const envioId = req.params.id;
+  const query = 'UPDATE envioFisico SET estado = ? WHERE id = ?';
+  db.query(query, ['Finalizado', envioId], (err, result) => {
+    if (err) {
+      console.error('Error al actualizar el estado del envío físico:', err);
+      res.status(500).json({ error: 'Error interno del servidor' });
+      return;
+    }
+    res.json({ message: 'Estado del envío físico actualizado correctamente' });
+    enviarMailFinalizado();
+  });
+});
 
 
 
+
+
+
+
+
+
+// Función para enviar el correo y redirigir al usuario
+async function enviarMailFinalizado(userId) {
+  try {
+    const config = {
+      host: "smtp.gmail.com",
+      port: 587,
+      auth: {
+        user: "gabrieljbc2@gmail.com",
+        pass: "ikvq ghnq etel wjcz",
+      },
+    };
+
+    // Mensaje de correo electrónico informando que el repartidor está en camino
+    const mensaje = {
+      from: "pineapplesea@gmail.com",
+      to: "gabrieljbc2@gmail.com", // Cambiar el destinatario al correo del usuario
+      subject: "¡Gracias por tu compra!",
+      html: `
+        <p>Estimado/a Cliente,</p>
+        <p>¡Tu orden de PineApple Sea fue cancelada!</p>
+        <p>¡Gracias por tu compra!</p>
+        <p>Atentamente,<br>Equipo de PineApple Sea</p>
+      `,
+    };
+
+    // Enviar el correo electrónico
+    const transport = nodemailer.createTransport(config);
+    const info = await transport.sendMail(mensaje);
+    console.log("Correo enviado:", info);
+  } catch (error) {
+    console.error("Error al enviar el correo:", error);
+    throw error;
+  }
+};
 
 
 
@@ -726,82 +793,115 @@ async function enviarMail(userId) {
 
 
 
-// Función para enviar el correo y redirigir al usuario
 async function enviarMailFisico(userId) {
   try {
-      const config = {
-          host: "smtp.gmail.com",
-          port: 587,
-          auth: {
-              user: "gabrieljbc2@gmail.com",
-              pass: "ikvq ghnq etel wjcz",
-          },
-      };
+    // Verificar si userId está definida y es válida
+    if (!userId) {
+      console.error("userId no está definida o es inválida.");
+      return;
+    }
 
-      const getProductosCarritoQuery = `SELECT p.nombre, p.precio, c.cantidad, (p.precio * c.cantidad) AS subtotal FROM productos p JOIN carrito c ON p.productoID = c.productoID WHERE c.userID = ?`;
+    const config = {
+      host: "smtp.gmail.com",
+      port: 587,
+      auth: {
+        user: "gabrieljbc2@gmail.com",
+        pass: "ikvq ghnq etel wjcz",
+      },
+    };
 
-      db.query(getProductosCarritoQuery, [userId], async (err, productosCarrito) => {
+    const getProductosCarritoQuery = `SELECT p.nombre, p.precio, c.cantidad, (p.precio * c.cantidad) AS subtotal FROM productos p JOIN carrito c ON p.productoID = c.productoID WHERE c.userID = ?`;
+
+    db.query(getProductosCarritoQuery, [userId], async (err, productosCarrito) => {
+      if (err) {
+        console.error("Error al obtener los productos del carrito:", err);
+        return;
+      }
+
+      const listaProductos = productosCarrito.map((producto) => {
+        return `
+          <li>Producto: ${producto.nombre}</li>
+          <li>Precio: ₡${parseFloat(producto.precio).toFixed(2)}</li>
+          <li>Cantidad: ${producto.cantidad}</li>
+          <li>Subtotal: ₡${parseFloat(producto.subtotal).toFixed(2)}</li>
+        `;
+      });
+
+      // Calcular el total de la compra
+      const totalCompra = productosCarrito.reduce((total, producto) => {
+        return total + parseFloat(producto.subtotal); // Sumar el subtotal de cada producto al total, convirtiéndolo a número decimal
+      }, 0); // Inicializar el total en 0
+
+      // Calcular impuestos (13% del total)
+      const impuesto = (totalCompra/100) * 13;
+      const totalConImpuestos = totalCompra;
+
+      // Generar código aleatorio
+      const codigoAleatorio = Math.floor(Math.random() * 10000);
+
+      // Almacenar los datos en la tabla envioFisico
+      const insertEnvioQuery = `INSERT INTO envioFisico (userId, nombreApellido, totalProductos, codigoAleatorio, estado) VALUES (?, ?, ?, ?, ?)`;
+      const usuarioQuery = `SELECT nombre, apellido FROM usuarios WHERE userID = ?`;
+
+      // Obtener nombre y apellido del usuario
+      db.query(usuarioQuery, [userId], async (err, usuario) => {
+        if (err) {
+          console.error("Error al obtener el nombre y apellido del usuario:", err);
+          return;
+        }
+
+        const nombreApellido = `${usuario[0].nombre} ${usuario[0].apellido}`;
+
+        // Insertar datos en la tabla envioFisico
+        db.query(insertEnvioQuery, [userId, nombreApellido, totalConImpuestos, codigoAleatorio, 'Pendiente'], async (err, result) => {
           if (err) {
-              console.error("Error al obtener los productos del carrito:", err);
-              return;
+            console.error("Error al insertar datos en la tabla envioFisico:", err);
+            return;
           }
 
-          const listaProductos = productosCarrito.map((producto) => {
-              return `
-              <li>Producto: ${producto.nombre}</li>
-              <li>Precio: ₡${parseFloat(producto.precio).toFixed(2)}</li>
-              <li>Cantidad: ${producto.cantidad}</li>
-              <li>Subtotal: ₡${parseFloat(producto.subtotal).toFixed(2)}</li>
-          `;
-          });
+          console.log("Datos almacenados en la tabla envioFisico:", result);
 
-          // Calcular el total de la compra
-          const totalCompra = productosCarrito.reduce((total, producto) => {
-              return total + parseFloat(producto.subtotal); // Sumar el subtotal de cada producto al total, convirtiéndolo a número decimal
-          }, 0); // Inicializar el total en 0
+          // Configurar transporte de correo
+          const transport = nodemailer.createTransport(config);
 
-          // Formatear el total de la compra con dos decimales
-          const totalFormateado = totalCompra.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-          });
-
-          const impuesto = totalCompra * 0.13; // Calcula el 13% del total
-          const impuestoFormateado = impuesto.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-          });
-          
+          // Crear mensaje de correo
           const mensaje = {
-              from: "pineapplesea@gmail.com",
-              to: "gabrieljbc2@gmail.com",
-              subject: "Confirmación de Compra en PineApple Sea",
-              html: `
+            from: "pineapplesea@gmail.com",
+            to: "gabrieljbc2@gmail.com",
+            subject: "Confirmación de Compra en PineApple Sea",
+            html: `
               <p>Estimado/a Cliente,</p>
               <p>¡Gracias por realizar tu compra en nuestra tienda!</p>
               <p>A continuación, te proporcionamos los detalles de tu compra:</p>
               <ul>
-              ${listaProductos.join("")}
+                ${listaProductos.join("")}
               </ul>
-              <p> 13% del IVA Incluido en el total de: ₡${impuestoFormateado})</p>
-              <p>Total de la compra: ₡${totalFormateado}</p>
+              <p>Impuestos (13%): ₡${impuesto.toFixed(2)}</p>
+              <p>Total de la compra (con impuestos): ₡${totalConImpuestos.toFixed(2)}</p>
               <p>Recuerda que puedes contactarnos si tienes alguna pregunta o inquietud sobre tu compra.</p>
-              <p>Utiliza el siguiente código para cancelar en efectivo en nuestro local: ${Math.floor(Math.random() * 10000)}</p>
+              <p>Utiliza el siguiente código para cancelar en efectivo en nuestro local: ${codigoAleatorio}</p>
               <p>¡Esperamos que disfrutes de tu producto!</p>
               <p>Atentamente,<br>Equipo de la Tienda PineApple Sea</p>
-              `,
+            `,
           };
-          
 
-          const transport = nodemailer.createTransport(config);
+          // Enviar correo
           const info = await transport.sendMail(mensaje);
           console.log("Correo enviado:", info);
+        });
       });
+    });
   } catch (error) {
-      console.error("Error al enviar el correo:", error);
-      throw error;
+    console.error("Error al enviar el correo y almacenar datos:", error);
+    throw error;
   }
 }
+
+
+
+
+
+
 
 // Modificar la ruta para enviar el correo
 app.post("/enviar-correo-y-redirigir", (req, res) => {
