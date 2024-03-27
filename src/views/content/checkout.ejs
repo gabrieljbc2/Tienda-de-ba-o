@@ -102,10 +102,16 @@
                 <div class="col-lg-4">
                     <div class="checkout__order">
                         <h5>Su Orden</h5>
+
+
+
                         <div class="checkout__order__product" id="product-list">
                             <!-- Aquí se insertarán los productos del carrito -->
-                            <input hidden  id="orden_productos" name="productos"></input>
-                        </div>
+                     <input hidden  id="orden_productos" name="productos"></input>
+                       </div>
+
+
+
                         <div class="checkout__order__total">
                             <ul id="total-list">
                                 <li>Subtotal <span id="subtotal"></span></li>
@@ -132,7 +138,14 @@
         fetch('/productos-carrito')
             .then(response => response.json())
             .then(productos => {
-                const productList = document.getElementById('product-list');
+
+//Lista de productos
+                 const productList = document.getElementById('product-list');
+
+
+
+
+
                 let subtotal = 0;
                 // Verificar si hay productos en el carrito
                 if (productos.length === 0) {

@@ -333,15 +333,15 @@ async function enviarMailFinalizado(userId) {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "mitchel9608@gmail.com",
-        pass: "nhut obym ignk oqqu",
+        user: "gabrieljbc2@gmail.com",
+        pass: "vlgp hysb uvra jmcm",
       },
     };
 
     // Mensaje de correo electrónico informando que el repartidor está en camino
     const mensaje = {
       from: "pineapplesea@gmail.com",
-      to: "mitchel9608@gmail.com", // Cambiar el destinatario al correo del usuario
+      to: "gabrieljbc2@gmail.com", // Cambiar el destinatario al correo del usuario
       subject: "¡Gracias por tu compra!",
       html: `
         <p>Estimado/a Cliente,</p>
@@ -700,8 +700,8 @@ async function enviarMail(userId) {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "mitchel9608@gmail.com",
-        pass: "nhut obym ignk oqqu",
+        user: "gabrieljbc2@gmail.com",
+        pass: "vlgp hysb uvra jmcm",
       },
     };
     crearPDF(orden_compra);
@@ -746,7 +746,7 @@ async function enviarMail(userId) {
 
       const mensaje = {
         from: "pineapplesea@gmail.com",
-        to: "mitchel9608@gmail.com",
+        to: "gabrieljbc2@gmail.com",
         subject: "Confirmación de Compra en PineApple Sea",
         html: `
           <p>Estimado/a Cliente,</p>
@@ -805,8 +805,8 @@ async function enviarMailFisico(userId) {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "mitchel9608@gmail.com",
-        pass: "nhut obym ignk oqqu",
+        user: "gabrieljbc2@gmail.com",
+        pass: "vlgp hysb uvra jmcm",
       },
     };
 
@@ -867,7 +867,7 @@ async function enviarMailFisico(userId) {
           // Crear mensaje de correo
           const mensaje = {
             from: "pineapplesea@gmail.com",
-            to: "mitchel9608@gmail.com",
+            to: "gabrieljbc2@gmail.com",
             subject: "Confirmación de Compra en PineApple Sea",
             html: `
               <p>Estimado/a Cliente,</p>
@@ -882,7 +882,21 @@ async function enviarMailFisico(userId) {
               <p>Utiliza el siguiente código para cancelar en efectivo en nuestro local: ${codigoAleatorio}</p>
               <p>¡Esperamos que disfrutes de tu producto!</p>
               <p>Atentamente,<br>Equipo de la Tienda PineApple Sea</p>
-            `,
+            `, attachments: [
+              {
+                filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".xml",
+                path: __dirname + "/Compra_PineAppleSea_.xml",
+                contentType: "text/xml",
+              },
+              {
+                filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".pdf",
+                path: __dirname + "/Compra_PineAppleSea_Respuesta.pdf",
+              },
+              {
+                filename: "Response_Hacienda_" + new Date().toLocaleDateString("en-US") + ".xml",
+                path: __dirname + "/Response.xml",
+              },
+            ],
           };
 
           // Enviar correo
@@ -924,15 +938,15 @@ async function enviarMailEntregado(userId) {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "mitchel9608@gmail.com",
-        pass: "nhut obym ignk oqqu",
+        user: "gabrieljbc2@gmail.com",
+        pass: "vlgp hysb uvra jmcm",
       },
     };
 
     // Mensaje de correo electrónico informando que el repartidor está en camino
     const mensaje = {
       from: "pineapplesea@gmail.com",
-      to: "mitchel9608@gmail.com", // Cambiar el destinatario al correo del usuario
+      to: "gabrieljbc2@gmail.com", // Cambiar el destinatario al correo del usuario
       subject: "¡Tu pedido está en camino!",
       html: `
         <p>Estimado/a Cliente,</p>
@@ -960,15 +974,15 @@ async function enviarMailEnvio(userId) {
       host: "smtp.gmail.com",
       port: 587,
       auth: {
-        user: "mitchel9608@gmail.com",
-        pass: "nhut obym ignk oqqu",
+        user: "gabrieljbc2@gmail.com",
+        pass: "vlgp hysb uvra jmcm",
       },
     };
 
     // Mensaje de correo electrónico informando que el repartidor está en camino
     const mensaje = {
       from: "pineapplesea@gmail.com",
-      to: "mitchel9608@gmail.com", // Cambiar el destinatario al correo del usuario
+      to: "gabrieljbc2@gmail.com", // Cambiar el destinatario al correo del usuario
       subject: "¡Tu pedido está en camino!",
       html: `
         <p>Estimado/a Cliente,</p>
@@ -1339,6 +1353,8 @@ app.get("/countProductsByCategory", (req, res) => {
 
 // Ruta para obtener los productos del carrito asociados al usuario actual
 app.get("/productos-carrito", (req, res) => {
+
+
   const userId = req.session.userId; // Obtener el ID de usuario de la sesión
   if (!userId) {
     return res.json([]); // Si no hay un usuario loggeado, devolvemos un carrito vacío

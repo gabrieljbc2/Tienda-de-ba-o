@@ -55,7 +55,7 @@ function crearPDF(orden_compra) {
   doc
     .font(__dirname + "/fonts/Roboto-Regular.ttf")
     .fontSize(10)
-    .text(`Subtotal:                            ${subtotal}`);
+    .text(`Subtotal:                            ${subtotal-(subtotal/100)*13}`);
   doc.moveDown();
   doc
     .font(__dirname + "/fonts/Roboto-Regular.ttf")
