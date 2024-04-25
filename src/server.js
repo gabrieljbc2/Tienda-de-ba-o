@@ -852,10 +852,9 @@ async function enviarMailFisico(userId) {
         const subtotalProducto = precioSinImpuestos * cantidad; // Calcular el subtotal del producto sin impuestos
         totalSinImpuestos += subtotalProducto;
         impuestoTotal += impuestoProducto;
-       // <li>Precio: ₡${precioSinImpuestos.toFixed(2)}</li>
+        // <li>Precio: ₡${precioSinImpuestos.toFixed(2)}</li>
         return `
           <li>Producto: ${producto.nombre}</li>
-
           <li>Cantidad: ${producto.cantidad}</li>
           <li>Precio (sin impuestos): ₡${subtotalProducto.toFixed(2)}</li>
           <li>Impuesto (13%): ₡${impuestoProducto.toFixed(2)}</li>
@@ -865,55 +864,80 @@ async function enviarMailFisico(userId) {
       // Generar código aleatorio
       const codigoAleatorio = Math.floor(Math.random() * 10000);
 
-      // Configurar transporte de correo
-      const transport = nodemailer.createTransport(config);
+      // Almacenar los datos en la tabla envioFisico
+      const insertEnvioQuery = `INSERT INTO envioFisico (userId, nombreApellido, totalProductos, codigoAleatorio, estado) VALUES (?, ?, ?, ?, ?)`;
+      const usuarioQuery = `SELECT nombre, apellido FROM usuarios WHERE userID = ?`;
 
-      // Crear mensaje de correo
-      const mensaje = {
-        from: "pineapplesea@gmail.com",
-        to: "gabrieljbc2@gmail.com",
-        subject: "Confirmación de Compra en PineApple Sea",
-        html: `
-          <p>Estimado/a Cliente,</p>
-          <p>¡Gracias por realizar tu compra en nuestra tienda!</p>
-          <p>A continuación, te proporcionamos los detalles de tu compra:</p>
-          <ul>
-            ${listaProductos.join("")}
-          </ul>
-          <p>Subtotal (sin impuestos): ₡${totalSinImpuestos.toFixed(2)}</p>
-          <p>Impuestos (13%): ₡${impuestoTotal.toFixed(2)}</p>
-          <p>Total de la compra (con impuestos): ₡${(totalSinImpuestos + impuestoTotal).toFixed(2)}</p>
-          <p>Recuerda que puedes contactarnos si tienes alguna pregunta o inquietud sobre tu compra.</p>
-          <p>Utiliza el siguiente código para cancelar en efectivo en nuestro local: ${codigoAleatorio}</p>
-          <p>¡Esperamos que disfrutes de tu producto!</p>
-          <p>Atentamente,<br>Equipo de la Tienda PineApple Sea</p>
-        `,
-        attachments: [
-          {
-            filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".xml",
-            path: __dirname + "/Compra_PineAppleSea_.xml",
-            contentType: "text/xml",
-          },
-          {
-            filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".pdf",
-            path: __dirname + "/Compra_PineAppleSea_Respuesta.pdf",
-          },
-          {
-            filename: "Response_Hacienda_" + new Date().toLocaleDateString("en-US") + ".xml",
-            path: __dirname + "/Response.xml",
-          },
-        ],
-      };
+      // Obtener nombre y apellido del usuario
+      db.query(usuarioQuery, [userId], async (err, usuario) => {
+        if (err) {
+          console.error("Error al obtener el nombre y apellido del usuario:", err);
+          return;
+        }
 
-      // Enviar correo
-      const info = await transport.sendMail(mensaje);
-      console.log("Correo enviado:", info);
+        const nombreApellido = `${usuario[0].nombre} ${usuario[0].apellido}`;
+
+        // Insertar datos en la tabla envioFisico
+        db.query(insertEnvioQuery, [userId, nombreApellido, totalSinImpuestos + impuestoTotal, codigoAleatorio, 'Pendiente'], async (err, result) => {
+          if (err) {
+            console.error("Error al insertar datos en la tabla envioFisico:", err);
+            return;
+          }
+
+          console.log("Datos almacenados en la tabla envioFisico:", result);
+
+          // Configurar transporte de correo
+          const transport = nodemailer.createTransport(config);
+
+          // Crear mensaje de correo
+          const mensaje = {
+            from: "pineapplesea@gmail.com",
+            to: "gabrieljbc2@gmail.com",
+            subject: "Confirmación de Compra en PineApple Sea",
+            html: `
+              <p>Estimado/a Cliente,</p>
+              <p>¡Gracias por realizar tu compra en nuestra tienda!</p>
+              <p>A continuación, te proporcionamos los detalles de tu compra:</p>
+              <ul>
+                ${listaProductos.join("")}
+              </ul>
+              <p>Subtotal (sin impuestos): ₡${totalSinImpuestos.toFixed(2)}</p>
+              <p>Impuestos (13%): ₡${impuestoTotal.toFixed(2)}</p>
+              <p>Total de la compra (con impuestos): ₡${(totalSinImpuestos + impuestoTotal).toFixed(2)}</p>
+              <p>Recuerda que puedes contactarnos si tienes alguna pregunta o inquietud sobre tu compra.</p>
+              <p>Utiliza el siguiente código para cancelar en efectivo en nuestro local: ${codigoAleatorio}</p>
+              <p>¡Esperamos que disfrutes de tu producto!</p>
+              <p>Atentamente,<br>Equipo de la Tienda PineApple Sea</p>
+            `,
+            attachments: [
+              {
+                filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".xml",
+                path: __dirname + "/Compra_PineAppleSea_.xml",
+                contentType: "text/xml",
+              },
+              {
+                filename: "Compra_PineAppleSea_" + new Date().toLocaleDateString("en-US") + ".pdf",
+                path: __dirname + "/Compra_PineAppleSea_Respuesta.pdf",
+              },
+              {
+                filename: "Response_Hacienda_" + new Date().toLocaleDateString("en-US") + ".xml",
+                path: __dirname + "/Response.xml",
+              },
+            ],
+          };
+
+          // Enviar correo
+          const info = await transport.sendMail(mensaje);
+          console.log("Correo enviado:", info);
+        });
+      });
     });
   } catch (error) {
     console.error("Error al enviar el correo y almacenar datos:", error);
     throw error;
   }
 }
+
 
 
 
